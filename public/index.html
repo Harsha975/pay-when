@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Pay-When</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%236366f1'/%3E%3Cpath d='M9 17l5 5 9-12' stroke='white' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#07090f;--bg2:#0c1020;--surface:#111628;--surface2:#161c33;--line:#222a45;--line2:#2d3658;
+  --tx:#eef1fb;--tx2:#aab3cf;--mut:#7480a3;
+  --acc:#6d7cff;--acc2:#a06bff;--accsoft:rgba(109,124,255,.14);
+  --ok:#34d399;--oksoft:rgba(52,211,153,.13);--warn:#fbbf24;--warnsoft:rgba(251,191,36,.13);
+  --bad:#fb7185;--badsoft:rgba(251,113,133,.12);
+  --shadow:0 1px 0 rgba(255,255,255,.04) inset,0 10px 30px -12px rgba(0,0,0,.6);
+  --r:16px;
+}
+@media (prefers-color-scheme:light){:root{
+  --bg:#f5f6fb;--bg2:#eceefa;--surface:#ffffff;--surface2:#f7f8fd;--line:#e3e6f2;--line2:#d3d8ea;
+  --tx:#12172b;--tx2:#4a5373;--mut:#7a84a6;
+  --acc:#4f5df5;--acc2:#8b4dff;--accsoft:rgba(79,93,245,.09);
+  --ok:#0f9d6c;--oksoft:rgba(15,157,108,.1);--warn:#b7791f;--warnsoft:rgba(217,150,20,.12);
+  --bad:#d6334f;--badsoft:rgba(214,51,79,.08);
+  --shadow:0 1px 2px rgba(20,28,60,.05),0 10px 30px -14px rgba(30,40,90,.18);
+}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--tx);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  background:radial-gradient(900px 480px at 78% -8%,rgba(125,98,255,.22),transparent 60%),radial-gradient(700px 420px at 8% 0%,rgba(70,120,255,.16),transparent 60%),var(--bg);
+  background-attachment:fixed;min-height:100vh}
+@media (prefers-color-scheme:light){body{background:radial-gradient(900px 480px at 78% -8%,rgba(125,98,255,.14),transparent 60%),radial-gradient(700px 420px at 8% 0%,rgba(70,120,255,.1),transparent 60%),var(--bg)}}
+.wrap{max-width:880px;margin:0 auto;padding:28px 18px 96px}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:8px}
+
+/* ---- top bar ---- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:44px}
+.brand{white-space:nowrap;display:flex;align-items:center;gap:10px;font-weight:750;font-size:18px;letter-spacing:-.02em}
+.logo{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;box-shadow:0 6px 18px -6px var(--acc)}
+.logo svg{width:18px;height:18px}
+.status{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:99px;background:var(--surface);border:1px solid var(--line);color:var(--tx2)}
+.chip i{width:7px;height:7px;border-radius:50%;background:var(--mut)}
+.chip.on i{background:var(--ok);box-shadow:0 0 0 3px var(--oksoft)}
+.chip.warn i{background:var(--warn);box-shadow:0 0 0 3px var(--warnsoft)}
+.chip.off i{background:var(--bad);box-shadow:0 0 0 3px var(--badsoft)}
+
+/* ---- hero ---- */
+.hero{text-align:center;margin-bottom:30px}
+.hero h1{font-size:clamp(34px,6.4vw,56px);line-height:1.05;letter-spacing:-.035em;margin:0 0 14px;font-weight:800}
+.grad{background:linear-gradient(100deg,var(--acc),var(--acc2) 55%,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{margin:0 auto;max-width:560px;color:var(--tx2);font-size:17px}
+.flow{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:22px;color:var(--mut);font-size:13px;font-weight:600}
+.flow span{display:inline-flex;align-items:center;gap:8px}
+.flow b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accsoft);color:var(--acc);font-size:11px}
+.flow em{font-style:normal;opacity:.5}
+
+/* ---- cards ---- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.composer{padding:8px;border-radius:20px;background:linear-gradient(var(--surface),var(--surface)) padding-box,linear-gradient(135deg,rgba(109,124,255,.55),rgba(160,107,255,.15) 40%,var(--line)) border-box;border:1px solid transparent}
+.composer textarea{border:0;background:transparent;font-size:19px;line-height:1.45;padding:16px 16px 6px;min-height:92px;box-shadow:none}
+.composer textarea:focus{outline:none}
+.composer-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 8px 8px 16px}
+.examples{display:flex;gap:6px;flex-wrap:wrap;flex:1;align-items:center}
+.examples small{color:var(--mut);font-weight:600;margin-right:2px}
+.ex{font:inherit;font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:99px;background:var(--surface2);border:1px solid var(--line);color:var(--tx2);cursor:pointer;transition:.15s}
+.ex:hover{border-color:var(--acc);color:var(--acc);transform:translateY(-1px)}
+.hint{font-size:11.5px;color:var(--mut)}
+
+textarea,input{width:100%;font:inherit;color:var(--tx);background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:11px 13px;transition:border-color .15s,box-shadow .15s}
+textarea{resize:vertical}
+textarea:focus,input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--accsoft)}
+::placeholder{color:var(--mut)}
+label{display:block;font-size:12px;font-weight:650;color:var(--tx2);margin:14px 0 6px}
+label small{font-weight:500;color:var(--mut)}
+
+/* ---- buttons ---- */
+.btn{font:inherit;font-weight:650;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:11px;padding:10px 16px;cursor:pointer;transition:transform .12s,box-shadow .15s,background .15s,border-color .15s;text-decoration:none;color:#fff;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));box-shadow:0 8px 20px -10px var(--acc)}
+.btn:hover{transform:translateY(-1px);box-shadow:0 12px 24px -10px var(--acc)}
+.btn:active{transform:none}
+.btn.ghost{background:var(--surface2);color:var(--tx);border-color:var(--line2);box-shadow:none}
+.btn.ghost:hover{border-color:var(--acc);color:var(--acc)}
+.btn.ok{background:linear-gradient(135deg,#10b981,#34d399);box-shadow:0 8px 20px -10px var(--ok);color:#052e20}
+.btn.danger{background:transparent;color:var(--bad);border-color:var(--badsoft);box-shadow:none}
+.btn.danger:hover{background:var(--badsoft);border-color:var(--bad)}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:9px}
+.btn[disabled]{opacity:.55;cursor:progress;transform:none}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:r .7s linear infinite}
+@keyframes r{to{transform:rotate(360deg)}}
+
+/* ---- contract preview ---- */
+.doc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.eyebrow{font-size:11px;font-weight:750;letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
+.amount{font-size:44px;font-weight:800;letter-spacing:-.035em;line-height:1.05}
+.amount small{font-size:16px;font-weight:650;color:var(--mut);margin-left:6px;letter-spacing:0}
+.to{color:var(--tx2);margin-top:4px}
+.when{margin:18px 0;padding:14px 16px;border-radius:12px;background:var(--accsoft);border:1px solid rgba(109,124,255,.25)}
+.when .eyebrow{color:var(--acc);margin-bottom:3px}
+.checks{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
+.checks li{display:flex;gap:10px;align-items:flex-start;color:var(--tx2)}
+.checks li::before{content:"";flex:none;width:18px;height:18px;margin-top:2px;border-radius:50%;background:var(--oksoft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.5l3 3 6-7' stroke='%2334d399' stroke-width='2.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat}
+.meta-row{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 4px}
+.tag{font-size:12px;font-weight:600;color:var(--tx2);background:var(--surface2);border:1px solid var(--line);padding:4px 10px;border-radius:8px}
+.note{display:flex;gap:10px;align-items:flex-start;margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13.5px}
+.note.risk{background:var(--warnsoft);color:var(--tx2)}
+.note.risk::before{content:"!";flex:none;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--warn);color:#241a00;font-weight:800;font-size:12px;margin-top:1px}
+.note.q::before{content:"?";flex:none;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--acc);color:#fff;font-weight:800;font-size:12px;margin-top:1px}
+.note.q{background:var(--accsoft);color:var(--tx2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:620px){.grid2{grid-template-columns:1fr}.amount{font-size:36px}}
+.err{color:var(--bad);font-size:13.5px;margin-top:10px;font-weight:550}
+.err:empty{display:none}
+
+/* ---- list ---- */
+.sec-title{display:flex;align-items:center;gap:10px;margin:34px 2px 14px}
+.sec-title h2{margin:0;font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);font-weight:750}
+.sec-title::after{content:"";flex:1;height:1px;background:var(--line)}
+.empty{text-align:center;padding:38px 20px;color:var(--mut);border:1.5px dashed var(--line2);border-radius:var(--r)}
+.empty b{display:block;color:var(--tx2);font-size:15px;margin-bottom:4px}
+
+.c-head{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.who{display:flex;gap:12px;align-items:center;min-width:0}
+.avatar{flex:none;width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--acc),var(--acc2))}
+.c-title{font-weight:700;font-size:16.5px;letter-spacing:-.01em;line-height:1.3}
+.c-sub{color:var(--mut);font-size:13px;overflow:hidden;text-overflow:ellipsis}
+.c-amt{text-align:right}
+.c-amt .n{font-size:26px;font-weight:800;letter-spacing:-.025em;line-height:1}
+.c-amt .cur{font-size:12px;color:var(--mut);font-weight:650;margin-left:4px}
+.quote{margin:14px 0 0;padding:10px 14px;border-left:3px solid var(--line2);color:var(--tx2);font-size:14px;font-style:italic;background:var(--surface2);border-radius:0 10px 10px 0}
+
+/* lifecycle tracker */
+.track{display:grid;grid-template-columns:repeat(4,1fr);margin:20px 0 6px;position:relative}
+.step{position:relative;text-align:center;font-size:12px;font-weight:650;color:var(--mut)}
+.step .dot{position:relative;z-index:1;width:26px;height:26px;margin:0 auto 7px;border-radius:50%;background:var(--surface2);border:2px solid var(--line2);display:grid;place-items:center;transition:.3s}
+.step .dot svg{width:13px;height:13px;opacity:0}
+.step::before{content:"";position:absolute;top:12px;left:-50%;width:100%;height:2px;background:var(--line2);z-index:0;transition:.4s}
+.step:first-child::before{display:none}
+.step.done{color:var(--tx2)}
+.step.done .dot{background:var(--acc);border-color:var(--acc)}
+.step.done .dot svg{opacity:1}
+.step.done::before{background:var(--acc)}
+.step.now .dot{border-color:var(--acc);box-shadow:0 0 0 5px var(--accsoft)}
+.step.now{color:var(--tx)}
+.step.now .dot::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--acc);animation:pulse 1.6s ease-in-out infinite}
+.step.fin .dot{background:var(--ok);border-color:var(--ok)}
+.step.fin::before{background:var(--ok)}
+.step.fin{color:var(--ok)}
+.step.ref .dot{background:var(--mut);border-color:var(--mut)}
+.step.ref{color:var(--mut)}
+@keyframes pulse{50%{transform:scale(.55);opacity:.5}}
+
+.badge{font-size:11px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:99px;display:inline-block}
+.b-awaiting_funding{background:var(--warnsoft);color:var(--warn)}
+.b-armed{background:var(--accsoft);color:var(--acc)}
+.b-releasing{background:var(--warnsoft);color:var(--warn)}
+.b-released{background:var(--oksoft);color:var(--ok)}
+.b-refunded,.b-stopped{background:var(--surface2);color:var(--mut);border:1px solid var(--line)}
+
+.facts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+
+/* veto panel */
+.veto{display:flex;align-items:center;gap:18px;margin-top:16px;padding:16px;border-radius:14px;background:var(--warnsoft);border:1px solid rgba(251,191,36,.35)}
+.ring{position:relative;flex:none;width:68px;height:68px}
+.ring svg{width:68px;height:68px;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:6}
+.ring .bg{stroke:rgba(251,191,36,.2)}
+.ring .fg{stroke:var(--warn);stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.veto h4{margin:0 0 2px;font-size:15px}
+.veto p{margin:0;color:var(--tx2);font-size:13.5px}
+.veto .btn{margin-left:auto}
+@media (max-width:560px){.veto{flex-wrap:wrap}.veto .btn{margin-left:0;width:100%}}
+
+.panel{margin-top:16px;padding:14px;border-radius:12px;background:var(--surface2);border:1px solid var(--line)}
+.panel .eyebrow{margin-bottom:8px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.actions .sp{flex:1}
+
+/* timeline */
+details.tl-wrap{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+details.tl-wrap summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);user-select:none}
+details.tl-wrap summary::-webkit-details-marker{display:none}
+details.tl-wrap summary::before{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:.2s}
+details.tl-wrap[open] summary::before{transform:rotate(45deg)}
+.tl{list-style:none;margin:14px 0 0;padding:0 0 0 4px}
+.tl li{position:relative;padding:0 0 16px 26px;font-size:14px;color:var(--tx2)}
+.tl li::before{content:"";position:absolute;left:5px;top:20px;bottom:-2px;width:2px;background:var(--line)}
+.tl li:last-child::before{display:none}
+.tl li .pt{position:absolute;left:0;top:4px;width:12px;height:12px;border-radius:50%;background:var(--surface);border:3px solid var(--mut)}
+.tl .k{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin-right:8px;color:var(--mut)}
+.tl .t{color:var(--mut);font-size:12px;margin-left:6px;white-space:nowrap}
+.tl .k-funded .pt,.tl .k-paid .pt{border-color:var(--ok)}.tl .k-funded .k,.tl .k-paid .k{color:var(--ok)}
+.tl .k-verdict .pt,.tl .k-observe .pt{border-color:var(--acc)}.tl .k-verdict .k,.tl .k-observe .k{color:var(--acc)}
+.tl .k-veto .pt,.tl .k-evidence .pt{border-color:var(--warn)}.tl .k-veto .k,.tl .k-evidence .k{color:var(--warn)}
+.tl .k-refund .pt,.tl .k-error .pt{border-color:var(--bad)}.tl .k-refund .k,.tl .k-error .k{color:var(--bad)}
+.conf{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:750;padding:2px 9px;border-radius:99px;margin-right:6px;vertical-align:1px}
+.conf.s{background:var(--oksoft);color:var(--ok)}.conf.n{background:var(--badsoft);color:var(--bad)}.conf.u{background:var(--warnsoft);color:var(--warn)}
+.latest-verdict{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);font-size:14px;color:var(--tx2)}
+.latest-verdict .eyebrow{margin-bottom:6px;display:flex;align-items:center;gap:6px}
+
+/* toasts + confetti */
+#toasts{position:fixed;z-index:50;right:16px;bottom:16px;display:grid;gap:8px;max-width:calc(100vw - 32px)}
+.toast{background:var(--surface);border:1px solid var(--line2);box-shadow:0 14px 40px -14px rgba(0,0,0,.55);padding:12px 16px;border-radius:12px;font-size:14px;font-weight:550;animation:in .25s ease both;display:flex;gap:10px;align-items:center}
+.toast.bad{border-color:var(--bad)}.toast.good{border-color:var(--ok)}
+@keyframes in{from{opacity:0;transform:translateY(8px) scale(.98)}}
+.confetti{position:fixed;top:-12px;width:8px;height:14px;z-index:60;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translate3d(var(--dx),105vh,0) rotate(var(--rot));opacity:.9}}
+.skeleton{height:150px;border-radius:var(--r);background:linear-gradient(90deg,var(--surface),var(--surface2),var(--surface));background-size:200% 100%;animation:sh 1.3s linear infinite;border:1px solid var(--line)}
+@keyframes sh{to{background-position:-200% 0}}
+footer{margin-top:44px;text-align:center;color:var(--mut);font-size:12.5px}
+@media (max-width:560px){
+  .top{margin-bottom:28px}
+  .status{justify-content:flex-end}.chip{padding:4px 9px;font-size:11px}
+  .examples{flex:1 0 100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -8px;padding:0 8px 4px}
+  .examples::-webkit-scrollbar{display:none}
+  .ex{white-space:nowrap;flex:none}
+  .hint{display:none}
+  .composer-foot{padding:6px 10px 10px}
+  .composer-foot .btn{width:100%}
+  .c-amt{text-align:left;width:100%;display:flex;align-items:center;justify-content:space-between}
+  .c-amt .badge{margin-top:0!important}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      Pay-When
+    </div>
+    <div class="status" id="pills"></div>
+  </header>
+
+  <section class="hero">
+    <h1>If this, <span class="grad">then pay.</span></h1>
+    <p>Say in one sentence when money should move. PayPal holds the funds, AI watches for the moment, and it pays out automatically.</p>
+    <div class="flow">
+      <span><b>1</b>Say it</span><em>→</em>
+      <span><b>2</b>PayPal holds it</span><em>→</em>
+      <span><b>3</b>AI referee checks</span><em>→</em>
+      <span><b>4</b>Paid, or refunded</span>
+    </div>
+  </section>
+
+  <div class="card composer">
+    <textarea id="sentence" rows="3" placeholder="Pay my designer 200 when she delivers the first logo files"></textarea>
+    <div class="composer-foot">
+      <div class="examples">
+        <small>Try</small>
+        <button class="ex" data-s="Pay my designer Maya 200 dollars when she delivers the first logo files as SVG and PNG">Designer delivers</button>
+        <button class="ex" data-s="Pay 50 dollars to dev@example.com when anthropics/anthropic-sdk-typescript publishes a new release">GitHub release</button>
+        <button class="ex" data-s="Give my cousin 100 dollars if he finishes the marathon, with proof of his finish time">Marathon finish</button>
+      </div>
+      <span class="hint" id="kbd"></span>
+      <button class="btn" id="go">Create contract</button>
+    </div>
+  </div>
+  <div class="err" id="err"></div>
+
+  <div id="preview"></div>
+
+  <div class="sec-title"><h2>Your contracts</h2></div>
+  <div id="list"><div class="skeleton"></div></div>
+
+  <footer>Funds are held, never spent, until the referee is confident and you have had your veto window.</footer>
+</div>
+<div id="toasts"></div>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const api = async (p, o) => {
+  const r = await fetch(p, o && { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(o) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+};
+const money = (n, cur) => { try { return new Intl.NumberFormat("en-US", { style: "currency", currency: cur, maximumFractionDigits: 2 }).format(Number(n)); } catch { return `${n} ${cur}`; } };
+const initials = (n) => (String(n || "?").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("") || "?").toUpperCase();
+const WATCH = { evidence: "Evidence submitted by payee", url: "Web page monitor", github_release: "GitHub release", github_pr_merged: "GitHub PR merged" };
+const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+$("#kbd").textContent = (isMac ? "⌘" : "Ctrl") + " + Enter";
+
+function toast(msg, kind = "") {
+  const t = document.createElement("div"); t.className = "toast " + kind; t.textContent = msg;
+  $("#toasts").appendChild(t); setTimeout(() => { t.style.opacity = 0; t.style.transition = ".3s"; setTimeout(() => t.remove(), 300); }, 3800);
+}
+function confetti() {
+  if (matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+  const cols = ["#6d7cff", "#a06bff", "#34d399", "#fbbf24", "#f472b6"];
+  for (let i = 0; i < 70; i++) {
+    const e = document.createElement("i"); e.className = "confetti";
+    e.style.left = Math.random() * 100 + "vw"; e.style.background = cols[i % cols.length];
+    e.style.setProperty("--dx", (Math.random() * 240 - 120) + "px"); e.style.setProperty("--rot", (Math.random() * 900 - 450) + "deg");
+    e.style.animationDuration = 1.8 + Math.random() * 1.6 + "s"; e.style.animationDelay = Math.random() * .35 + "s";
+    e.style.borderRadius = Math.random() > .5 ? "50%" : "2px";
+    document.body.appendChild(e); setTimeout(() => e.remove(), 4200);
+  }
+}
+async function busy(btn, fn) {
+  const html = btn.innerHTML; btn.disabled = true; btn.innerHTML = `<span class="spin"></span>${btn.dataset.busy || "Working..."}`;
+  try { return await fn(); } finally { btn.disabled = false; btn.innerHTML = html; }
+}
+
+/* ---------- composer ---------- */
+let parsed = null, sentence = "";
+document.querySelectorAll(".ex").forEach((b) => b.onclick = () => { $("#sentence").value = b.dataset.s; $("#sentence").focus(); });
+$("#sentence").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) $("#go").click(); });
+$("#go").dataset.busy = "Claude is reading it...";
+$("#go").onclick = () => busy($("#go"), async () => {
+  sentence = $("#sentence").value.trim(); $("#err").textContent = "";
+  try { parsed = await api("/api/parse", { sentence }); renderPreview(); $("#preview").scrollIntoView({ behavior: "smooth", block: "start" }); }
+  catch (e) { $("#err").textContent = e.message; }
+});
+
+function renderPreview() {
+  const p = parsed, w = p.watcher;
+  const watching = WATCH[w.type] + (w.repo ? ` · ${w.repo}${w.pr_number ? " #" + w.pr_number : ""}` : "") + (w.url ? ` · ${w.url}` : "");
+  $("#preview").innerHTML = `<div class="card" style="margin-top:18px">
+    <div class="doc-head">
+      <div><div class="eyebrow">Contract preview · nothing is held yet</div>
+        <div class="amount" style="margin-top:6px">${esc(money(p.amount, p.currency))}</div>
+        <div class="to">to <b>${esc(p.payee_name)}</b></div></div>
+      <span class="badge b-armed">Draft</span>
+    </div>
+    <div class="when"><div class="eyebrow">Pays when</div><div style="font-weight:600;font-size:16px">${esc(p.condition)}</div></div>
+    <div class="eyebrow">The referee will verify</div>
+    <ul class="checks">${p.criteria.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>
+    <div class="meta-row"><span class="tag">Watching: ${esc(watching)}</span><span class="tag">Auto-refund after ${p.deadline_days} days</span></div>
+    ${p.risks.map((r) => `<div class="note risk">${esc(r)}</div>`).join("")}
+    ${p.clarifying_questions.map((r) => `<div class="note q">${esc(r)}</div>`).join("")}
+    <div class="grid2">
+      <div><label for="email">Payee's PayPal email</label><input id="email" type="email" value="${esc(p.payee_email || "")}" placeholder="maya@example.com"></div>
+      <div><label for="veto">Veto window <small>(seconds you get to stop a release)</small></label><input id="veto" type="number" min="0" value="30"></div>
+    </div>
+    <div class="actions"><button class="btn" id="fund" data-busy="Creating hold...">Hold ${esc(money(p.amount, p.currency))} on PayPal</button><button class="btn ghost" id="nope">Discard</button></div>
+    <div class="err" id="err2"></div></div>`;
+  $("#nope").onclick = () => { $("#preview").innerHTML = ""; };
+  $("#fund").onclick = () => busy($("#fund"), async () => {
+    try {
+      const c = await api("/api/contracts", { sentence, parsed, payee_email: $("#email").value, veto_seconds: Number($("#veto").value) });
+      location.href = c.paypal.approveUrl;
+    } catch (e) { $("#err2").textContent = e.message; }
+  });
+}
+
+/* ---------- contract cards ---------- */
+const CHECK = '<svg viewBox="0 0 20 20" fill="none"><path d="M5 10.5l3.2 3.2L15 6.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function tracker(c) {
+  const idx = { awaiting_funding: 0, armed: 1, releasing: 2, released: 3, refunded: 3, stopped: 3 }[c.status];
+  const labels = ["Created", "Funds held", "Verified", c.status === "refunded" || c.status === "stopped" ? "Refunded" : "Paid"];
+  return `<div class="track">${labels.map((l, i) => {
+    let cls = "";
+    if (c.status === "released") cls = "done" + (i === 3 ? " fin" : "");
+    else if (c.status === "refunded" || c.status === "stopped") cls = i < 3 ? (i <= 1 ? "done" : "") : "done ref";
+    else cls = i < idx ? "done" : i === idx ? "now" : "";
+    return `<div class="step ${cls}"><div class="dot">${CHECK}</div>${l}</div>`;
+  }).join("")}</div>`;
+}
+function fmtLog(t) {
+  const m = /^(SATISFIED|NOT_SATISFIED|UNCLEAR) \((\d+)%\):\s*([\s\S]*)$/.exec(t.text);
+  if (t.kind === "verdict" && m) {
+    const cls = m[1] === "SATISFIED" ? "s" : m[1] === "UNCLEAR" ? "u" : "n";
+    return `<span class="conf ${cls}">${m[1].replace("_", " ").toLowerCase()} · ${m[2]}%</span>${esc(m[3])}`;
+  }
+  return esc(t.text);
+}
+function card(c) {
+  const live = c.status === "armed" || c.status === "releasing";
+  const lastV = [...c.timeline].reverse().find((t) => t.kind === "verdict");
+  const left = c.releaseAt ? Math.max(0, Math.ceil((new Date(c.releaseAt) - Date.now()) / 1000)) : 0;
+  const daysLeft = Math.max(0, Math.ceil((new Date(c.deadline) - Date.now()) / 86400e3));
+  const vm = lastV && /^(SATISFIED|NOT_SATISFIED|UNCLEAR) \((\d+)%\):\s*([\s\S]*)$/.exec(lastV.text);
+  return `<article class="card" data-id="${c.id}" data-status="${c.status}">
+    <div class="c-head">
+      <div class="who"><div class="avatar">${esc(initials(c.payee_name))}</div>
+        <div style="min-width:0"><div class="c-title">${esc(c.title)}</div><div class="c-sub">${esc(c.payee_name)} · ${esc(c.payee_email)}</div></div></div>
+      <div class="c-amt"><div class="n">${esc(money(c.amount, c.currency))}</div><span class="badge b-${c.status}" style="margin-top:8px">${c.status.replace("_", " ")}</span></div>
+    </div>
+    <div class="quote">“${esc(c.sentence)}”</div>
+    ${tracker(c)}
+
+    ${c.status === "releasing" ? `<div class="veto" data-release="${c.releaseAt}" data-total="${Math.max(1, c.veto_seconds)}">
+      <div class="ring"><svg viewBox="0 0 68 68"><circle class="bg" cx="34" cy="34" r="29"/><circle class="fg" cx="34" cy="34" r="29" stroke-dasharray="182.2" stroke-dashoffset="0"/></svg><b>${left}</b></div>
+      <div><h4>Condition met. Releasing soon.</h4><p>Money moves when the timer ends. Stop it if this looks wrong.</p></div>
+      <button class="btn danger" onclick="act('${c.id}','veto',this)">Veto payment</button></div>` : ""}
+
+    ${c.status === "awaiting_funding" ? `<div class="panel"><div class="eyebrow">Next step</div><p style="margin:0 0 12px;color:var(--tx2)">Approve the hold on PayPal. Your money is reserved, not spent.</p>
+      <a class="btn" href="${esc(c.paypal.approveUrl)}">Approve hold on PayPal</a></div>` : ""}
+
+    ${c.status === "armed" && vm ? `<div class="latest-verdict"><div class="eyebrow">Latest referee decision</div>${fmtLog(lastV)}</div>` : ""}
+
+    ${c.status === "armed" && c.watcher.type === "evidence" ? `<div class="panel"><div class="eyebrow">Payee: submit proof of delivery</div>
+      <textarea id="ev-${c.id}" rows="2" placeholder="What was delivered? File names, formats, links..."></textarea>
+      <div class="row" style="display:flex;gap:8px;margin-top:8px"><input id="evu-${c.id}" placeholder="Link (optional)"><button class="btn sm" data-busy="Referee reviewing..." onclick="evid('${c.id}',this)">Submit</button></div></div>` : ""}
+
+    <div class="facts">
+      <span class="tag">${esc(WATCH[c.watcher.type])}${c.watcher.repo ? " · " + esc(c.watcher.repo) : ""}</span>
+      ${live ? `<span class="tag">${daysLeft}d until auto-refund</span>` : ""}
+      <span class="tag">${c.paypal.mock ? "Mock PayPal" : "PayPal sandbox"}</span>
+      ${c.paypal.payoutBatchId ? `<span class="tag">Payout ${esc(c.paypal.payoutBatchId)}</span>` : ""}
+    </div>
+
+    ${live ? `<div class="actions">
+      ${c.status === "armed" ? `<button class="btn ok sm" onclick="act('${c.id}','confirm',this)">I confirm delivery</button>` : ""}
+      <button class="btn ghost sm" data-busy="Checking..." onclick="act('${c.id}','check',this)">Check now</button>
+      <span class="sp"></span>
+      <button class="btn danger sm" onclick="if(confirm('Cancel and release the hold back to you?'))act('${c.id}','cancel',this)">Cancel &amp; refund</button></div>` : ""}
+
+    <details class="tl-wrap" ${["released", "refunded"].includes(c.status) || c.timeline.length < 5 ? "open" : ""}><summary>Activity (${c.timeline.length})</summary>
+      <ul class="tl">${[...c.timeline].reverse().map((t) => `<li class="k-${t.kind}"><span class="pt"></span><span class="k">${t.kind}</span>${fmtLog(t)}<span class="t">${new Date(t.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span></li>`).join("")}</ul></details>
+  </article>`;
+}
+
+window.act = async (id, a, btn) => {
+  try {
+    await (btn ? busy(btn, () => api(`/api/contracts/${id}/${a}`, {})) : api(`/api/contracts/${id}/${a}`, {}));
+    if (a === "veto") toast("Payment vetoed. Back to watching.");
+    if (a === "cancel") toast("Cancelled. The hold was released back to you.");
+    if (a === "confirm") toast("Delivery confirmed. Release timer started.", "good");
+  } catch (e) { toast(e.message, "bad"); }
+  load(true);
+};
+window.evid = async (id, btn) => {
+  const text = $("#ev-" + id).value.trim();
+  if (!text) return toast("Add a few words about what was delivered.", "bad");
+  try { await busy(btn, () => api(`/api/contracts/${id}/evidence`, { text, url: $("#evu-" + id).value || undefined })); toast("Evidence sent to the referee."); }
+  catch (e) { toast(e.message, "bad"); }
+  load(true);
+};
+
+/* ---------- data loop ---------- */
+const seen = {};
+let first = true;
+async function load(force) {
+  const a = document.activeElement;
+  if (!force && a && ["TEXTAREA", "INPUT"].includes(a.tagName) && a.id !== "sentence" && a.closest("article")) return; // don't wipe what the user is typing
+  let cs;
+  try { cs = await api("/api/contracts"); } catch { return; }
+  for (const c of cs) {
+    if (!first && seen[c.id] && seen[c.id] !== "released" && c.status === "released") { toast(`Paid ${money(c.amount, c.currency)} to ${c.payee_name}`, "good"); confetti(); }
+    seen[c.id] = c.status;
+  }
+  first = false;
+  $("#list").innerHTML = cs.length ? cs.map(card).join("") :
+    `<div class="empty"><b>No contracts yet</b>Describe a payment above, or tap one of the examples.</div>`;
+  tick();
+}
+function tick() {
+  document.querySelectorAll(".veto[data-release]").forEach((v) => {
+    const left = Math.max(0, (new Date(v.dataset.release) - Date.now()) / 1000), total = Number(v.dataset.total);
+    $("b", v).textContent = Math.ceil(left);
+    $(".fg", v).style.strokeDashoffset = String(182.2 * (1 - left / total));
+  });
+}
+setInterval(tick, 250);
+
+(async () => {
+  const s = await api("/api/status").catch(() => null);
+  $("#pills").innerHTML = s
+    ? `<span class="chip ${s.claude ? "on" : "off"}"><i></i>Claude ${s.claude ? "ready" : "no key"}</span><span class="chip ${s.paypal === "mock" ? "warn" : "on"}"><i></i>PayPal ${s.paypal}</span>`
+    : `<span class="chip off"><i></i>Server offline</span>`;
+  const open = new URLSearchParams(location.search).get("open");
+  if (open) { history.replaceState(null, "", "/"); toast("Funds are now held on PayPal. Watching for the event.", "good"); }
+  await load(true); setInterval(load, 3000);
+})();
+</script>
+</body>
+</html>
