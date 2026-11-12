@@ -13,6 +13,7 @@ export interface Watcher {
 }
 
 export interface TimelineEntry { at: string; kind: string; text: string }
+export interface EvidenceFile { name: string; mime: string; size: number; path: string }
 
 export interface Contract {
   id: string;
@@ -31,7 +32,7 @@ export interface Contract {
   status: Status;
   releaseAt?: string;
   lastSnapshotHash?: string;
-  evidence: { at: string; text: string; url?: string }[];
+  evidence: { at: string; text: string; url?: string; files?: EvidenceFile[] }[];
   paypal: { orderId?: string; authId?: string; captureId?: string; payoutBatchId?: string; approveUrl?: string; mock: boolean };
   timeline: TimelineEntry[];
   createdAt: string;

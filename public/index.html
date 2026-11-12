@@ -397,6 +397,8 @@ function card(c) {
 
     ${c.status === "armed" && c.watcher.type === "evidence" ? `<div class="panel"><div class="eyebrow">Payee: submit proof of delivery</div>
       <textarea id="ev-${c.id}" rows="2" placeholder="What was delivered? File names, formats, links..."></textarea>
+      <label for="evf-${c.id}" style="margin-top:10px">Attach the files <small>(PNG, JPG, WebP, GIF or SVG, up to 3 files, 3 MB each. The AI referee inspects them.)</small></label>
+      <input id="evf-${c.id}" type="file" multiple accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.svg">
       <div class="row" style="display:flex;gap:8px;margin-top:8px"><input id="evu-${c.id}" placeholder="Link (optional)"><button class="btn sm" data-busy="Referee reviewing..." onclick="evid('${c.id}',this)">Submit</button></div></div>` : ""}
 
     <div class="facts">
@@ -428,8 +430,17 @@ window.act = async (id, a, btn) => {
 };
 window.evid = async (id, btn) => {
   const text = $("#ev-" + id).value.trim();
-  if (!text) return toast("Add a few words about what was delivered.", "bad");
-  try { await busy(btn, () => api(`/api/contracts/${id}/evidence`, { text, url: $("#evu-" + id).value || undefined })); toast("Evidence sent to the referee."); }
+  const picked = [...$("#evf-" + id).files];
+  if (!text && !picked.length) return toast("Add a few words or attach the delivered files.", "bad");
+  if (picked.length > 3 || picked.some((f) => f.size > 3 * 1024 * 1024)) return toast("Up to 3 files, 3 MB each.", "bad");
+  const b64 = (f) => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = no; r.readAsDataURL(f); });
+  try {
+    await busy(btn, async () => {
+      const files = await Promise.all(picked.map(async (f) => ({ name: f.name, data: await b64(f) })));
+      return api(`/api/contracts/${id}/evidence`, { text, files, url: $("#evu-" + id).value || undefined });
+    });
+    toast("Evidence sent to the referee.");
+  }
   catch (e) { toast(e.message, "bad"); }
   load(true);
 };
@@ -439,7 +450,8 @@ const seen = {};
 let first = true;
 async function load(force) {
   const a = document.activeElement;
-  if (!force && a && ["TEXTAREA", "INPUT"].includes(a.tagName) && a.id !== "sentence" && a.closest("article")) return; // don't wipe what the user is typing
+  const pending = [...document.querySelectorAll("article textarea, article input")].some((i) => (i.type === "file" ? i.files.length : i.value)); // don't wipe unsent text or a chosen file
+  if (!force && ((a && ["TEXTAREA", "INPUT"].includes(a.tagName) && a.id !== "sentence" && a.closest("article")) || pending)) return;
   let cs;
   try { cs = await api("/api/contracts"); } catch { return; }
   for (const c of cs) {

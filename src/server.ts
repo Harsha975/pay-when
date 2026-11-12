@@ -5,8 +5,10 @@ import { parseSentence, judge, HAS_KEY } from "./ai.js";
 import * as pp from "./paypal.js";
 import { Contract, all, get, log, put } from "./store.js";
 import { startLoop, refund, tick, finalizeIfDue } from "./engine.js";
+import { saveFiles } from "./evidence.js";
 
 const app = express();
+app.use("/api/contracts/:id/evidence", express.json({ limit: "14mb" })); // 3 files x 3 MB as base64
 app.use(express.json());
 app.use(express.static("public"));
 const BASE = process.env.BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
@@ -68,8 +70,11 @@ app.get("/mock/approve/:id", wrap(async (q, s) => {
 app.post("/api/contracts/:id/evidence", wrap(async (q, s) => {
   const c = get(String(q.params.id)); if (!c) return s.sendStatus(404);
   if (c.status !== "armed") return s.status(400).json({ error: "Contract is not armed." });
-  c.evidence.push({ at: new Date().toISOString(), text: String(q.body.text ?? "").slice(0, 8000), url: q.body.url });
-  log(c, "evidence", "Evidence submitted."); put(c);
+  let files; try { files = saveFiles(c.id, q.body.files); } catch (e: any) { return s.status(400).json({ error: e.message }); }
+  const text = String(q.body.text ?? "").slice(0, 8000);
+  if (!text.trim() && !files.length) return s.status(400).json({ error: "Add a description or a file." });
+  c.evidence.push({ at: new Date().toISOString(), text, url: typeof q.body.url === "string" ? q.body.url.slice(0, 500) : undefined, files });
+  log(c, "evidence", `Evidence submitted${files.length ? ` with ${files.length} file(s)` : ""}.`); put(c);
   await tick(c); s.json(get(c.id));
 }));
 
